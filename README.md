@@ -138,16 +138,6 @@ ecopulse-equivalents-engine/
 
 ---
 
-## 👥 Team
-
-Built for **Challenge 3 — Carbon Footprint Awareness Platform**
-
----
-
 ## 📄 License
 
 MIT License — free to use, modify, and distribute.
-
----
-
-> *"The moment someone truly sees their impact — that's when behaviour changes."*
