@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoPulse Equivalents Engine</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --pink: #FF6B9F;
+            --pink-dim: rgba(255,107,159,0.12);
+            --text: #FFFFFF;
+            --muted: #AAAAAA;
+            --border: #2a2a2a;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
+        #app { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 20px; position: relative; }
+
+        /* Header */
+        .header { text-align: center; padding: 24px 0 8px; }
+        .header h1 { color: var(--pink); font-size: 2.4rem; margin-bottom: 6px; }
+        .header p { color: var(--muted); font-size: 1rem; }
+
+        /* Tracker */
+        .tracker { background: var(--card); border-radius: 12px; padding: 30px; border: 1px solid var(--border); }
+        .slider-group { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+        .slider-group label { font-size: 1.1rem; color: var(--pink); font-weight: 600; }
+        .co2-display { font-size: 3rem; font-weight: 700; }
+        .co2-display span { font-size: 1.4rem; color: var(--muted); font-weight: 400; }
+        input[type="range"] {
+            width: 100%; max-width: 600px; appearance: none; height: 8px;
+            background: #333; border-radius: 4px; outline: none; cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none; width: 22px; height: 22px;
+            background: var(--pink); border-radius: 50%; cursor: pointer;
+            box-shadow: 0 0 10px var(--pink);
+        }
+        input[type="range"]:focus { outline: 2px solid var(--pink); outline-offset: 4px; }
+        .zero-hint { color: var(--muted); font-size: 0.9rem; min-height: 20px; text-align: center; }
+
+        /* Aha Moment */
+        .aha { background: var(--card); border-radius: 12px; padding: 36px; text-align: center; border: 2px solid var(--pink); transition: transform 0.2s ease; }
+        .aha-label { color: var(--pink); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
+        .aha-icon { font-size: 4rem; display: block; margin-bottom: 8px; }
+        .aha-value { font-size: 3rem; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+        .aha-desc { color: var(--muted); font-size: 1rem; margin-bottom: 24px; }
+        .share-btn {
+            background: var(--pink); color: white; border: none;
+            padding: 12px 28px; font-size: 1rem; font-weight: 600;
+            border-radius: 25px; cursor: pointer; transition: background 0.2s, transform 0.1s;
+        }
+        .share-btn:hover { background: #e0578d; transform: translateY(-1px); }
+
+        /* Categories */
+        .category-tabs { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .cat-btn {
+            background: var(--card); color: var(--muted); border: 1px solid var(--border);
+            padding: 10px 18px; border-radius: 25px; cursor: pointer;
+            transition: all 0.2s; font-size: 0.95rem; display: flex; align-items: center; gap: 7px;
+        }
+        .cat-btn:hover, .cat-btn.active { border-color: var(--pink); color: var(--pink); background: var(--pink-dim); }
+
+        /* Grid */
+        .equiv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .equiv-card { background: var(--card); border-radius: 12px; padding: 22px; border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s; }
+        .equiv-card:hover { transform: translateY(-4px); border-color: #444; }
+        .card-head { display: flex; align-items: center; gap: 10px; color: var(--muted); margin-bottom: 10px; }
+        .card-icon { font-size: 1.4rem; }
+        .card-cat { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
+        .card-val { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+        .card-unit { font-size: 1rem; font-weight: 400; color: var(--muted); }
+        .card-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
+        .empty-state { color: var(--muted); text-align: center; padding: 40px; font-size: 1rem; grid-column: 1/-1; }
+
+        /* Fixed Overlay Fix (Resolves the main structural output bug) */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            width: 340px; background: #1a1a1a;
+            border-radius: 20px; border: 2px solid var(--pink);
+            padding: 36px 32px; display: flex; flex-direction: column;
+            gap: 16px; text-align: center; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-close { position: absolute; top: 12px; right: 16px; background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+        .modal-close:hover { color: var(--text); }
+        .modal-badge { color: var(--pink); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; }
+        .modal-icon { font-size: 5rem; }
+        .modal-val { font-size: 2.2rem; font-weight: 800; line-height: 1.2; }
+        .modal-unit { font-size: 1rem; font-weight: 400; color: var(--muted); margin-top: 4px; display: block; }
+        .modal-context { color: var(--muted); font-size: 0.9rem; line-height: 1.5; }
+        .modal-context strong { color: var(--text); }
+        .modal-footer { color: #555; font-size: 0.8rem; border-top: 1px solid var(--border); padding-top: 12px; }
+
+        /* Reference Table */
+        .db-section { background: var(--card); border-radius: 12px; padding: 28px; border: 1px solid var(--border); }
+        .db-section h2 { color: var(--pink); font-size: 1.3rem; margin-bottom: 8px; }
+        .db-section p { color: var(--muted); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.5; }
+        .db-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 560px; }
+        th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+        th { color: var(--pink); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
+        td { color: var(--muted); }
+        td:first-child { color: var(--text); font-weight: 500; }
+    </style>
+</head>
+<body>
+<div id="app">
+
+    <header class="header">
+        <h1>EcoPulse</h1>
+        <p>Carbon Footprint Awareness Platform — Equivalents Engine</p>
+    </header>
+
+    <section class="tracker">
+        <div class="slider-group">
+            <label for="co2Slider">Your estimated daily CO₂e footprint</label>
+            <div class="co2-display"><span id="sliderVal">25</span> <span>kg</span></div>
+            <input type="range" id="co2Slider" min="0" max="50" value="25" step="1">
+            <div class="zero-hint" id="zeroHint"></div>
+        </div>
+    </section>
+
+    <section class="aha" id="ahaSection">
+        <div class="aha-label" id="ahaLabel">Shocking reality</div>
+        <span class="aha-icon" id="ahaIcon">📱</span>
+        <div class="aha-value" id="ahaValue">—</div>
+        <div class="aha-desc" id="ahaDesc">—</div>
+        <button class="share-btn" id="shareBtn">Share this reality 📤</button>
+    </section>
+
+    <nav class="category-tabs" id="catTabs">
+        <button class="cat-btn active" data-cat="all">🌐 All</button>
+        <button class="cat-btn" data-cat="trees">🌳 Trees</button>
+        <button class="cat-btn" data-cat="water">💧 Water</button>
+        <button class="cat-btn" data-cat="food">🍔 Food</button>
+        <button class="cat-btn" data-cat="travel">✈️ Travel</button>
+        <button class="cat-btn" data-cat="energy">⚡ Energy</button>
+        <button class="cat-btn" data-cat="products">👕 Products</button>
+    </nav>
+
+    <section class="equiv-grid" id="equivGrid"></section>
+
+    <section class="db-section">
+        <h2>Conversion references</h2>
+        <p>Standard conversion factors for CO₂e (Carbon Dioxide Equivalent), where 1 kg CO₂e represents the global warming potential of various activities.</p>
+        <div class="db-wrap">
+            <table>
+                <thead>
+                    <tr><th>Activity</th><th>Per 1 kg CO₂e</th><th>Source</th></tr>
+                </thead>
+                <tbody id="refBody"></tbody>
+            </table>
+        </div>
+    </section>
+
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal-box">
+            <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+            <div class="modal-badge">My CO₂ reality</div>
+            <div class="modal-icon" id="modalIcon">📱</div>
+            <div class="modal-val" id="modalVal">—</div>
+            <div class="modal-unit" id="modalUnit">—</div>
+            <p class="modal-context">The real-world impact of my daily carbon footprint, via <strong>EcoPulse</strong>.</p>
+            <div class="modal-footer">#ClimateAwareness #EcoPulse #NetZero</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const DB = [
+        { id:'mature_tree',      cat:'trees',    icon:'🌳', name:'Tree absorption days',    factor:16.6,  unit:'days',        label:'Time for a tree to absorb this production',  desc:'One mature tree absorbs ~22 kg CO₂ per year.',                              source:'European Environment Agency' },
+        { id:'plastic_bottles',  cat:'water',    icon:'💧', name:'Plastic water bottles',    factor:33,    unit:'bottles',       label:'Equivalent plastic bottles produced',       desc:'Embodied carbon of manufacturing 500ml plastic bottles.',                    source:'Our World in Data' },
+        { id:'beef',             cat:'food',     icon:'🥩', name:'Beef production',          factor:0.037, unit:'kg of beef',    label:'Equivalent mass of standard beef production',desc:'Beef produces approx. 27 kg CO₂e per kg.',                               source:'Our World in Data (Poore & Nemecek)' },
+        { id:'rice',             cat:'food',     icon:'🍚', name:'Dry rice production',      factor:0.25,  unit:'kg of rice',    label:'Equivalent mass of dry rice crop yield',    desc:'Production footprint of agricultural dry rice cultivation.',                source:'Our World in Data' },
+        { id:'cheeseburger',     cat:'food',     icon:'🍔', name:'Cheeseburgers',            factor:0.4,   unit:'cheeseburgers', label:'Equivalent fast-food cheeseburgers cooked', desc:'Approx. 2.5 kg CO₂e per standard commercial cheeseburger.',               source:'Various LCA estimates' },
+        { id:'car_km',           cat:'travel',   icon:'🚗', name:'Car driving',              factor:8.3,   unit:'km',            label:'Distance driven by a gas car',              desc:'Typical small passenger vehicle driving emissions at ~120 g/km.',            source:'UK DEFRA/BEIS GHG Conversions' },
+        { id:'flight_km',        cat:'travel',   icon:'✈️', name:'Economy flight',           factor:6.7,   unit:'km',            label:'Distance flown on a commercial aircraft',   desc:'Average economy passenger class seat emissions at ~150 g/km.',               source:'UK DEFRA/BEIS GHG Conversions' },
+        { id:'phone_charge',     cat:'energy',   icon:'📱', name:'Smartphone charges',       factor:540,   unit:'charges',       label:'Full smartphone battery recharges',         desc:'Charging a 5 Wh smartphone battery on average local electrical grids.',     source:'US EPA Equivalents Calculator' },
+        { id:'led_bulb',         cat:'energy',   icon:'💡', name:'LED bulb hours',           factor:270,   unit:'hours',         label:'Runtime operating hours of an LED bulb',    desc:'Running a 10 W residential LED light bulb at 0.37 kg CO₂/kWh.',              source:'Derived from US EPA eGRID' },
+        { id:'streaming',        cat:'energy',   icon:'🎬', name:'HD video streaming',       factor:3.5,   unit:'hours',         label:'High-Definition remote video streaming runtime', desc:'Aggregated data center, network infrastructure, and display device load.',source:'IEA / Various reports' },
+        { id:'tshirt',           cat:'products', icon:'👕', name:'Cotton T-shirt',           factor:0.15,  unit:'shirts',        label:'Equivalent cotton garments manufactured',    desc:'Embodied lifecycle emissions of producing one standard cotton shirt.',      source:'Ellen MacArthur Foundation' },
+    ];
+
+    const AHA_MAP = {
+        all:      'phone_charge',
+        trees:    'mature_tree',
+        water:    'plastic_bottles',
+        food:     'cheeseburger',
+        travel:   'car_km',
+        energy:   'led_bulb',
+        products: 'tshirt',
+    };
+
+    let co2 = 25;
+    let activeCat = 'all';
+
+    const slider    = document.getElementById('co2Slider');
+    const sliderVal = document.getElementById('sliderVal');
+    const zeroHint  = document.getElementById('zeroHint');
+    const ahaLabel  = document.getElementById('ahaLabel');
+    const ahaIcon   = document.getElementById('ahaIcon');
+    const ahaValue  = document.getElementById('ahaValue');
+    const ahaDesc   = document.getElementById('ahaDesc');
+    const equivGrid = document.getElementById('equivGrid');
+    const shareBtn  = document.getElementById('shareBtn');
+    const modal     = document.getElementById('shareModal');
+    const modalClose= document.getElementById('modalClose');
+    const modalIcon = document.getElementById('modalIcon');
+    const modalVal  = document.getElementById('modalVal');
+    const modalUnit = document.getElementById('modalUnit');
+
+    function fmt(n, item) {
+        if (n === 0) return '0';
+        if (item.factor < 0.1) return n.toFixed(2);
+        if (item.factor < 10)  return n.toFixed(1);
+        return Math.round(n).toLocaleString();
+    }
+
+    function getItem(id) { return DB.find(d => d.id === id); }
+
+    function updateAha() {
+        const item = getItem(AHA_MAP[activeCat]) || getItem('phone_charge');
+        const val  = item.factor * co2;
+        ahaLabel.textContent = item.label.toUpperCase();
+        ahaIcon.textContent  = item.icon;
+        if (co2 === 0) {
+            ahaValue.textContent = '0';
+            ahaDesc.textContent  = 'Move the slider to see your impact.';
+        } else {
+            // Stripped value-concatenation unit repetition inside text values
+            ahaValue.textContent = fmt(val, item) + ' ' + (item.unit.includes('kg') ? item.unit : '');
+            if(item.unit === 'km' || item.unit === 'hours' || item.unit === 'days') ahaValue.textContent = fmt(val, item) + ' ' + item.unit;
+            if(ahaValue.textContent.trim() === fmt(val,item)) ahaValue.textContent = fmt(val, item);
+            ahaDesc.textContent  = item.desc;
+        }
+    }
+
+    function renderGrid() {
+        equivGrid.innerHTML = '';
+        const items = activeCat === 'all' ? DB : DB.filter(d => d.cat === activeCat);
+
+        if (items.length === 0) {
+            equivGrid.innerHTML = '<p class="empty-state">No equivalents for this category yet.</p>';
+            return;
+        }
+
+        items.forEach(item => {
+            const val = item.factor * co2;
+            const card = document.createElement('div');
+            card.className = 'equiv-card';
+            card.innerHTML = `
+                <div class="card-head">
+                    <span class="card-icon">${item.icon}</span>
+                    <span class="card-cat">${item.name}</span>
+                </div>
+                <div class="card-val">
+                    ${co2 === 0 ? '0' : fmt(val, item)}
+                    <span class="card-unit">${item.unit}</span>
+                </div>
+                <p class="card-desc">${item.desc}</p>
+            `;
+            equivGrid.appendChild(card);
+        });
+    }
+
+    function updateAll() {
+        zeroHint.textContent = co2 === 0 ? 'Great! A zero carbon day — slide right to explore your impact.' : '';
+        updateAha();
+        renderGrid();
+    }
+
+    slider.addEventListener('input', function() {
+        co2 = parseInt(this.value);
+        sliderVal.textContent = co2;
+        updateAll();
+    });
+
+    document.getElementById('catTabs').addEventListener('click', function(e) {
+        const btn = e.target.closest('.cat-btn');
+        if (!btn) return;
+        activeCat = btn.dataset.cat;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        updateAll();
+    });
+
+    shareBtn.addEventListener('click', function() {
+        const item = getItem(AHA_MAP[activeCat]) || getItem('phone_charge');
+        const val  = item.factor * co2;
+        modalIcon.textContent = item.icon;
+        modalVal.textContent  = co2 === 0 ? '0' : fmt(val, item);
+        modalUnit.textContent = item.unit.toUpperCase();
+        modal.classList.add('open');
+    });
+
+    modalClose.addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
+
+    // Accessibility: ESC Key modal exit feature implementation
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('open')) {
+            modal.classList.remove('open');
+        }
+    });
+
+    // Reference table setup
+    const refBody = document.getElementById('refBody');
+    DB.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${item.name} (${item.cat})</td>
+            <td><strong>${item.factor}</strong> ${item.unit}</td>
+            <td>${item.source}</td>
+        `;
+        refBody.appendChild(tr);
+    });
+
+    updateAll();
+</script>
+</body>
+</html>
