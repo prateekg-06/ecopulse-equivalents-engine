@@ -40,8 +40,7 @@
         }
         input[type="range"]:focus { outline: 2px solid var(--pink); outline-offset: 4px; }
         .zero-hint { color: var(--muted); font-size: 0.9rem; min-height: 20px; text-align: center; }
-
-        /* Aha Moment */
+        
         .aha { background: var(--card); border-radius: 12px; padding: 36px; text-align: center; border: 2px solid var(--pink); transition: transform 0.2s ease; }
         .aha-label { color: var(--pink); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
         .aha-icon { font-size: 4rem; display: block; margin-bottom: 8px; }
@@ -54,7 +53,6 @@
         }
         .share-btn:hover { background: #e0578d; transform: translateY(-1px); }
 
-        /* Categories */
         .category-tabs { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
         .cat-btn {
             background: var(--card); color: var(--muted); border: 1px solid var(--border);
@@ -63,7 +61,6 @@
         }
         .cat-btn:hover, .cat-btn.active { border-color: var(--pink); color: var(--pink); background: var(--pink-dim); }
 
-        /* Grid */
         .equiv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
         .equiv-card { background: var(--card); border-radius: 12px; padding: 22px; border: 1px solid var(--border); transition: transform 0.2s, border-color 0.2s; }
         .equiv-card:hover { transform: translateY(-4px); border-color: #444; }
@@ -75,7 +72,6 @@
         .card-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.5; }
         .empty-state { color: var(--muted); text-align: center; padding: 40px; font-size: 1rem; grid-column: 1/-1; }
 
-        /* Fixed Overlay Fix (Resolves the main structural output bug) */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85); align-items: center; justify-content: center;
@@ -305,14 +301,12 @@
     modalClose.addEventListener('click', () => modal.classList.remove('open'));
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('open'); });
 
-    // Accessibility: ESC Key modal exit feature implementation
     window.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && modal.classList.contains('open')) {
             modal.classList.remove('open');
         }
     });
 
-    // Reference table setup
     const refBody = document.getElementById('refBody');
     DB.forEach(item => {
         const tr = document.createElement('tr');
