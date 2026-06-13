@@ -113,7 +113,7 @@ open index.html
 ```
 ecopulse-equivalents-engine/
 │
-├── index.html          # Complete app — all HTML, CSS, JS in one file
+├── prompt.html          # Complete app — all HTML, CSS, JS in one file
 └── README.md           # This file
 ```
 
